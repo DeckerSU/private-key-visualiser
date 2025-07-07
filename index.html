@@ -10,20 +10,20 @@
 <link rel="manifest" href="/site.webmanifest" />
 <title>Bitcoin Private Key – 256-bit Visual Grid</title>
 <style>
-:root{--bit:24px;--gap:2px;--bg:#0e1116;--off:#1f2430;--on:#00c853;--border:#2b313c;--text:#e0e0e0;
-      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+:root{--bit:24px;--gap:2px;--bg:#0e1116;--off:#1f2430;--on:#00c853;--border:#2b313c;--text:#e0e0e0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 html,body{height:100%;margin:0;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center}
 h1{font-size:1.2rem;font-weight:600;margin:1.2rem 0 .8rem;opacity:.92}
 #grid{display:grid;grid-template-columns:repeat(16,var(--bit));grid-auto-rows:var(--bit);gap:var(--gap);
-      background:var(--border);padding:var(--gap);border-radius:8px;box-shadow:0 0 0 2px var(--border);
-      transition:box-shadow .3s,border-color .3s}
+      background:var(--border);padding:var(--gap);border-radius:8px;
+      box-shadow:0 0 0 2px var(--border);transition:box-shadow .3s,border-color .3s}
 #grid.highlight{border-color:var(--on);box-shadow:0 0 0 2px var(--on),0 0 12px 3px #00c85388}
 .bit{width:var(--bit);height:var(--bit);background:var(--off);cursor:pointer;border-radius:2px;transition:background .15s}
 .bit.on{background:var(--on)}
 .controls{margin:1.2rem 0 .6rem;display:flex;gap:.55rem;flex-wrap:wrap;justify-content:center}
 button,select{all:unset;cursor:pointer;background:var(--off);padding:.55rem 1.1rem;border-radius:6px;
               font-size:.85rem;font-weight:500;text-align:center;box-shadow:0 0 0 1px var(--border)}
-button:hover,select:hover{background:var(--border)}select{padding-right:1.8rem}
+button:hover,select:hover{background:var(--border)}
+select{padding-right:1.8rem}
 .api-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem}.api-label{font-size:.8rem;opacity:.8}
 .field-wrapper{width:min(92vw,820px);margin:.4rem 0}.label{display:block;font-size:.78rem;opacity:.75;margin-bottom:.25rem}
 .value{padding:0;border-radius:4px;background:#14171d;box-shadow:inset 0 0 0 1px var(--border);
@@ -45,8 +45,10 @@ button:hover,select:hover{background:var(--border)}select{padding-right:1.8rem}
 <div class="controls">
   <button id="btnClr">Clear</button>
   <button id="btnRand">Random</button>
-  <button id="btnRol" title="Rotate left (ROL)">←</button>
-  <button id="btnRor" title="Rotate right (ROR)">→</button>
+  <button id="btnRol" title="Rotate rows left (ROL) — key A">←</button>
+  <button id="btnRor" title="Rotate rows right (ROR) — key D">→</button>
+  <button id="btnRou" title="Rotate columns up (ROU) — key W">↑</button>
+  <button id="btnRod" title="Rotate columns down (ROD) — key S">↓</button>
 </div>
 
 <div class="api-row">
@@ -78,31 +80,29 @@ button:hover,select:hover{background:var(--border)}select{padding-right:1.8rem}
 </p>
 
 <script type="module">
-import { getPublicKey, Point, CURVE }  from "https://cdn.jsdelivr.net/npm/@noble/secp256k1@2.3.0/+esm";
-import { sha256 }                      from "https://esm.sh/@noble/hashes@1.3.2/sha256";
-import { ripemd160 }                   from "https://esm.sh/@noble/hashes@1.3.2/ripemd160";
-import bs58                            from "https://cdn.jsdelivr.net/npm/bs58@5.0.0/+esm";
-import { bech32, bech32m }             from "https://esm.sh/bech32@2.0.0";
+import { getPublicKey, Point, CURVE } from "https://cdn.jsdelivr.net/npm/@noble/secp256k1@2.3.0/+esm";
+import { sha256 }                     from "https://esm.sh/@noble/hashes@1.3.2/sha256";
+import { ripemd160 }                  from "https://esm.sh/@noble/hashes@1.3.2/ripemd160";
+import bs58                           from "https://cdn.jsdelivr.net/npm/bs58@5.0.0/+esm";
+import { bech32, bech32m }            from "https://esm.sh/bech32@2.0.0";
 
-/* ---------- grid ---------- */
-const bits = new Uint8Array(256), grid = document.getElementById('grid');
-for(let r=15;r>=0;r--)for(let c=15;c>=0;c--){const i=r*16+c, d=document.createElement('div');
+/* --- build grid & bits --- */
+const bits=new Uint8Array(256),grid=document.getElementById('grid');
+for(let r=15;r>=0;r--)for(let c=15;c>=0;c--){const i=r*16+c,d=document.createElement('div');
   d.className='bit';d.dataset.index=i;
   d.onclick=()=>{bits[i]^=1;d.classList.toggle('on',bits[i]);recalc();};
   grid.appendChild(d);}
-
-/* update grid from bits */
-function refreshGrid(){document.querySelectorAll('.bit')
-  .forEach(el=>el.classList.toggle('on',bits[el.dataset.index]));}
+const refreshGrid=()=>document.querySelectorAll('.bit')
+  .forEach(el=>el.classList.toggle('on',bits[el.dataset.index]));
 
 /* highlight */
 let hlTimeout=null;
-function triggerHighlight(){grid.classList.add('highlight');
-  clearTimeout(hlTimeout);hlTimeout=setTimeout(()=>grid.classList.remove('highlight'),3000);}
+const flash=()=>{grid.classList.add('highlight');
+  clearTimeout(hlTimeout);hlTimeout=setTimeout(()=>grid.classList.remove('highlight'),3000);};
 
-/* refs */
-const $      = id=>document.getElementById(id),
-      apiSel = $('apiSelect'), binOut=$('bin'), hexOut=$('hex'), wifOut=$('wif');
+/* DOM refs */
+const $=id=>document.getElementById(id),apiSel=$('apiSelect');
+const binOut=$('bin'),hexOut=$('hex'),wifOut=$('wif');
 const addr={C:{t:$('addrCtext'),b:$('balC'),box:$('addrC')},
             U:{t:$('addrUtext'),b:$('balU'),box:$('addrU')},
             S:{t:$('addrStext'),b:$('balS'),box:$('addrS')},
@@ -110,17 +110,15 @@ const addr={C:{t:$('addrCtext'),b:$('balC'),box:$('addrC')},
             T:{t:$('addrTRtext'),b:$('balTR'),box:$('addrTR')}};
 
 /* helpers */
-const concat=(...arr)=>{const len=arr.reduce((n,a)=>n+a.length,0),o=new Uint8Array(len);let off=0;
-  for(const a of arr){o.set(a,off);off+=a.length;}return o;};
+const concat=(...a)=>{const len=a.reduce((n,x)=>n+x.length,0),u=new Uint8Array(len);let o=0;for(const x of a){u.set(x,o);o+=x.length;}return u;};
 const chk=p=>sha256(sha256(p)).slice(0,4);
 const b58c=p=>bs58.encode(concat(p,chk(p)));
 const to32=n=>Uint8Array.from(n.toString(16).padStart(64,'0').match(/.{2}/g).map(h=>parseInt(h,16)));
-const tagH=(tag,msg)=>{const enc=new TextEncoder();const th=sha256(enc.encode(tag));return sha256(concat(th,th,msg));};
+const tagH=(tag,msg)=>{const e=new TextEncoder();const t=sha256(e.encode(tag));return sha256(concat(t,t,msg));};
 
 /* balance fetch */
 function fetchBal(k){
-  const o=addr[k], a=o.t.textContent;
-  if(a==='—')return;
+  const o=addr[k],a=o.t.textContent;if(a==='—')return;
   o.b.textContent='0.00000000 BTC';o.box.classList.remove('funded','error');
   fetch(apiSel.value==='blockchain'
         ?`https://blockchain.info/q/getreceivedbyaddress/${a}?r=${Math.random()}`
@@ -130,35 +128,28 @@ function fetchBal(k){
   .catch(()=>o.error=true)
   .finally(()=>{o.b.textContent=((o.sats||0)/1e8).toFixed(8)+' BTC';
                 if(o.error)o.box.classList.add('error');
-                else if(o.sats>0){o.box.classList.add('funded');triggerHighlight();}});
+                else if(o.sats>0){o.box.classList.add('funded');flash();}});
 }
+/* click balance→mempool */
+Object.values(addr).forEach(o=>{o.b.onclick=()=>{const a=o.t.textContent;if(a!=='—')window.open(`https://mempool.space/address/${a}`,'_blank');};});
 
-/* balance click */
-Object.values(addr).forEach(o=>{o.b.onclick=()=>{const a=o.t.textContent;
-  if(a!=='—')window.open(`https://mempool.space/address/${a}`,'_blank');};});
+/* rotations rows */
+const rowLeft=b=>{const f=bits[b];for(let i=0;i<15;i++)bits[b+i]=bits[b+i+1];bits[b+15]=f;};
+const rowRight=b=>{const l=bits[b+15];for(let i=15;i>0;i--)bits[b+i]=bits[b+i-1];bits[b]=l;};
+const rolAll =()=>{for(let r=0;r<16;r++)rowLeft(r*16);refreshGrid();recalc();};
+const rorAll =()=>{for(let r=0;r<16;r++)rowRight(r*16);refreshGrid();recalc();};
+/* rotations columns */
+const colUp=c=>{const f=bits[c];for(let r=0;r<15;r++)bits[c+r*16]=bits[c+(r+1)*16];bits[c+15*16]=f;};
+const colDown=c=>{const l=bits[c+15*16];for(let r=15;r>0;r--)bits[c+r*16]=bits[c+(r-1)*16];bits[c]=l;};
+const rouAll =()=>{for(let c=0;c<16;c++)colUp(c);refreshGrid();recalc();};
+const rodAll =()=>{for(let c=0;c<16;c++)colDown(c);refreshGrid();recalc();};
 
-/* rotate helpers */
-function rotateRowLeft(base){
-  const first=bits[base];
-  for(let i=0;i<15;i++)bits[base+i]=bits[base+i+1];
-  bits[base+15]=first;
-}
-function rotateRowRight(base){
-  const last=bits[base+15];
-  for(let i=15;i>0;i--)bits[base+i]=bits[base+i-1];
-  bits[base]=last;
-}
-function rolAll(){for(let r=0;r<16;r++)rotateRowLeft(r*16);refreshGrid();recalc();}
-function rorAll(){for(let r=0;r<16;r++)rotateRowRight(r*16);refreshGrid();recalc();}
-
-/* main recalc */
+/* main calc */
 function recalc(){
   const bin=[...bits].reverse().join('');
   binOut.textContent=bin.replace(/(.{64})/g,'$1\n');
   const hex=BigInt('0b'+bin).toString(16).padStart(64,'0');hexOut.textContent=hex;
-  if(/^0+$/.test(bin)){wifOut.textContent='—';
-    Object.values(addr).forEach(o=>{o.t.textContent='—';o.b.textContent='0.00000000 BTC';o.box.classList.remove('funded','error');});
-    return;}
+  if(/^0+$/.test(bin)){wifOut.textContent='—';Object.values(addr).forEach(o=>{o.t.textContent='—';o.b.textContent='0.00000000 BTC';o.box.classList.remove('funded','error');});return;}
   const pk=Uint8Array.from(hex.match(/.{2}/g).map(h=>parseInt(h,16)));
 
   const pubC=getPublicKey(pk,true), pubU=getPublicKey(pk,false),
@@ -181,15 +172,20 @@ function recalc(){
 }
 
 /* buttons */
-$('btnRand').onclick=()=>{
-  const r=new Uint8Array(32);crypto.getRandomValues(r);
-  for(let i=0;i<256;i++)bits[i]=(r[Math.floor(i/8)]>>(i%8))&1;
-  refreshGrid();recalc();
-};
+$('btnRand').onclick=()=>{const r=new Uint8Array(32);crypto.getRandomValues(r);
+  for(let i=0;i<256;i++)bits[i]=(r[Math.floor(i/8)]>>(i%8))&1;refreshGrid();recalc();};
 $('btnClr').onclick =()=>{bits.fill(0);refreshGrid();recalc();};
-$('btnRol').onclick = rolAll;
-$('btnRor').onclick = rorAll;
-apiSel.onchange      = recalc;
+$('btnRol').onclick = rolAll; $('btnRor').onclick = rorAll;
+$('btnRou').onclick = rouAll; $('btnRod').onclick = rodAll;
+apiSel.onchange     = recalc;
+
+/* key bindings WASD */
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(['a','d','w','s'].includes(k)){e.preventDefault();
+    ({a:rolAll,d:rorAll,w:rouAll,s:rodAll}[k]());}
+});
+
 recalc();
 </script>
 </body>
