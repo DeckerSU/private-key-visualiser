@@ -1,210 +1,165 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bitcoin Private Key – 256-bit Visual Grid</title>
-
-  <style>
-    :root{
-      --bit:24px;--gap:2px;
-      --bg:#0e1116;--off:#1f2430;--on:#00c853;--border:#2b313c;--text:#e0e0e0;
-      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif
-    }
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);
-      display:flex;flex-direction:column;align-items:center}
-    h1{font-size:1.2rem;font-weight:600;margin:1.2rem 0 .8rem;opacity:.92}
-
-    /* bit grid */
-    #grid{display:grid;grid-template-columns:repeat(16,var(--bit));
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<title>Bitcoin Private Key – 256-bit Visual Grid</title>
+<style>
+:root{--bit:24px;--gap:2px;--bg:#0e1116;--off:#1f2430;--on:#00c853;--border:#2b313c;--text:#e0e0e0;
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);
+          display:flex;flex-direction:column;align-items:center}
+h1{font-size:1.2rem;font-weight:600;margin:1.2rem 0 .8rem;opacity:.92}
+#grid{display:grid;grid-template-columns:repeat(16,var(--bit));
       grid-auto-rows:var(--bit);gap:var(--gap);background:var(--border);
       padding:var(--gap);border-radius:8px;box-shadow:0 0 0 2px var(--border)}
-    .bit{width:var(--bit);height:var(--bit);background:var(--off);
-      cursor:pointer;border-radius:2px;transition:background .15s}
-    .bit.on{background:var(--on)}
-
-    /* controls / API */
-    .controls{margin:1.2rem 0 .6rem;display:flex;gap:.9rem;flex-wrap:wrap;justify-content:center}
-    button,select{all:unset;cursor:pointer;background:var(--off);padding:.55rem 1.4rem;
-      border-radius:6px;font-size:.85rem;font-weight:500;box-shadow:0 0 0 1px var(--border)}
-    button:hover,select:hover{background:var(--border)}
-    select{padding-right:1.8rem}
-    .api-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem}
-    .api-label{font-size:.8rem;opacity:.8}
-
-    /* output blocks */
-    .field-wrapper{width:min(92vw,820px);margin:.4rem 0}
-    .label{display:block;font-size:.78rem;opacity:.75;margin-bottom:.25rem}
-    .value{padding:0;border-radius:4px;background:#14171d;box-shadow:inset 0 0 0 1px var(--border);
-      font-family:"JetBrains Mono",Consolas,monospace;font-size:.72rem;display:flex;align-items:stretch;overflow:hidden}
-    .addr{flex:1;padding:.55rem .7rem;overflow-wrap:anywhere;user-select:all}
-    .balance{display:flex;align-items:center;justify-content:center;padding:.55rem .9rem;
-      font-size:.72rem;white-space:nowrap;border-left:1px dotted var(--border)}
-    .value.funded .balance{background:#00c853;color:#0e1116;font-weight:600}
-    .value.error  .balance{background:#c62828;color:#fff;font-weight:600}
-
-    /* multiline binary */
-    #bin{white-space:pre-wrap;word-break:break-all;padding:.55rem .7rem}
-  </style>
+.bit{width:var(--bit);height:var(--bit);background:var(--off);
+     cursor:pointer;border-radius:2px;transition:background .15s}
+.bit.on{background:var(--on)}
+.controls{margin:1.2rem 0 .6rem;display:flex;gap:.9rem;flex-wrap:wrap;justify-content:center}
+button,select{all:unset;cursor:pointer;background:var(--off);padding:.55rem 1.4rem;
+              border-radius:6px;font-size:.85rem;font-weight:500;box-shadow:0 0 0 1px var(--border)}
+button:hover,select:hover{background:var(--border)} select{padding-right:1.8rem}
+.api-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem}
+.api-label{font-size:.8rem;opacity:.8}
+.field-wrapper{width:min(92vw,820px);margin:.4rem 0}
+.label{display:block;font-size:.78rem;opacity:.75;margin-bottom:.25rem}
+.value{padding:0;border-radius:4px;background:#14171d;box-shadow:inset 0 0 0 1px var(--border);
+       font-family:"JetBrains Mono",Consolas,monospace;font-size:.72rem;display:flex;align-items:stretch;overflow:hidden}
+.addr{flex:1;padding:.55rem .7rem;overflow-wrap:anywhere;user-select:all}
+.balance{display:flex;align-items:center;justify-content:center;padding:.55rem .9rem;font-size:.72rem;
+         white-space:nowrap;border-left:1px dotted var(--border);cursor:pointer}
+.value.funded .balance{background:#00c853;color:#0e1116;font-weight:600}
+.value.error  .balance{background:#c62828;color:#fff;font-weight:600}
+#bin{white-space:pre-wrap;word-break:break-all;padding:.55rem .7rem}
+.disclaimer{max-width:820px;font-size:.74rem;opacity:.7;margin:1.4rem auto;text-align:center;line-height:1.35}
+</style>
 </head>
 <body>
-  <h1>256-bit Private-Key Visualiser</h1>
+<h1>256-bit Private-Key Visualiser</h1>
 
-  <div id="grid"></div>
+<div id="grid"></div>
 
-  <div class="controls">
-    <button id="btnClr">Clear</button>
-    <button id="btnRand">Random</button>
-  </div>
+<div class="controls">
+  <button id="btnClr">Clear</button>
+  <button id="btnRand">Random</button>
+</div>
 
-  <div class="api-row">
-    <span class="api-label">Blockchain Data API:</span>
-    <select id="apiSelect">
-      <option value="mempool">mempool.space</option>
-      <option value="blockchain" selected>blockchain.info</option>
-    </select>
-  </div>
+<div class="api-row">
+  <span class="api-label">Blockchain Data API:</span>
+  <select id="apiSelect">
+    <option value="mempool">mempool.space</option>
+    <option value="blockchain" selected>blockchain.info</option>
+  </select>
+</div>
 
-  <div class="field-wrapper"><span class="label">Private Key (Binary)</span><div id="bin" class="value"></div></div>
-  <div class="field-wrapper"><span class="label">Private Key (HEX)</span><div id="hex" class="value"></div></div>
-  <div class="field-wrapper"><span class="label">Wallet Import Format (WIF)</span><div id="wif" class="value"></div></div>
+<div class="field-wrapper"><span class="label">Private Key (Binary)</span><div id="bin" class="value"></div></div>
+<div class="field-wrapper"><span class="label">Private Key (HEX)</span><div id="hex" class="value"></div></div>
+<div class="field-wrapper"><span class="label">Wallet Import Format (WIF)</span><div id="wif" class="value"></div></div>
 
-  <div class="field-wrapper"><span class="label">BTC address (compressed)</span>
-    <div id="addrC" class="value"><span id="addrCtext" class="addr"></span><span id="balC" class="balance">0.00000000 BTC</span></div></div>
-  <div class="field-wrapper"><span class="label">Bitcoin Address (uncompressed)</span>
-    <div id="addrU" class="value"><span id="addrUtext" class="addr"></span><span id="balU" class="balance">0.00000000 BTC</span></div></div>
-  <div class="field-wrapper"><span class="label">Compressed segWit Base58 (P2SH-P2WPKH)</span>
-    <div id="addrS" class="value"><span id="addrStext" class="addr"></span><span id="balS" class="balance">0.00000000 BTC</span></div></div>
-  <div class="field-wrapper"><span class="label">SegWit Bech32 p2wpkh</span>
-    <div id="addrB32" class="value"><span id="addrB32text" class="addr"></span><span id="balB32" class="balance">0.00000000 BTC</span></div></div>
-  <div class="field-wrapper"><span class="label">Taproot P2TR (Bech32m)</span>
-    <div id="addrTR" class="value"><span id="addrTRtext" class="addr"></span><span id="balTR" class="balance">0.00000000 BTC</span></div></div>
+<div class="field-wrapper"><span class="label">BTC address (compressed)</span>
+  <div id="addrC" class="value"><span id="addrCtext" class="addr"></span><span id="balC" data-key="C" class="balance">0.00000000 BTC</span></div></div>
+<div class="field-wrapper"><span class="label">Bitcoin Address (uncompressed)</span>
+  <div id="addrU" class="value"><span id="addrUtext" class="addr"></span><span id="balU" data-key="U" class="balance">0.00000000 BTC</span></div></div>
+<div class="field-wrapper"><span class="label">Compressed segWit Base58 (P2SH-P2WPKH)</span>
+  <div id="addrS" class="value"><span id="addrStext" class="addr"></span><span id="balS" data-key="S" class="balance">0.00000000 BTC</span></div></div>
+<div class="field-wrapper"><span class="label">SegWit Bech32 p2wpkh</span>
+  <div id="addrB32" class="value"><span id="addrB32text" class="addr"></span><span id="balB32" data-key="B" class="balance">0.00000000 BTC</span></div></div>
+<div class="field-wrapper"><span class="label">Taproot P2TR (Bech32m)</span>
+  <div id="addrTR" class="value"><span id="addrTRtext" class="addr"></span><span id="balTR" data-key="T" class="balance">0.00000000 BTC</span></div></div>
+
+<p class="disclaimer">
+  Disclaimer: this mini-app was written by <strong>Decker</strong> with the help of AI,
+  inspired by <em>btckeygen.com</em> by MrFreeDragon.<br>
+  Source code will be published soon. Greetings to everyone who sparked my interest
+  in crypto, and to the professionals I greatly respect: jl777, ca333, CharlVS,
+  takenagain, smk762, gcharang, shamardy, onur-ozkan and many others I forgot to mention.
+</p>
 
 <script type="module">
-import { getPublicKey, Point, CURVE } from "https://cdn.jsdelivr.net/npm/@noble/secp256k1@2.3.0/+esm";
-import { sha256 }                     from "https://esm.sh/@noble/hashes@1.3.2/sha256";
-import { ripemd160 }                  from "https://esm.sh/@noble/hashes@1.3.2/ripemd160";
-import bs58                           from "https://cdn.jsdelivr.net/npm/bs58@5.0.0/+esm";
-import { bech32, bech32m }            from "https://esm.sh/bech32@2.0.0";
+import { getPublicKey, Point, CURVE }  from "https://cdn.jsdelivr.net/npm/@noble/secp256k1@2.3.0/+esm";
+import { sha256 }                      from "https://esm.sh/@noble/hashes@1.3.2/sha256";
+import { ripemd160 }                   from "https://esm.sh/@noble/hashes@1.3.2/ripemd160";
+import bs58                            from "https://cdn.jsdelivr.net/npm/bs58@5.0.0/+esm";
+import { bech32, bech32m }             from "https://esm.sh/bech32@2.0.0";
 
-/* ===== Build 16×16 grid ===== */
-const bits = new Uint8Array(256);
-const grid = document.getElementById('grid');
-for (let r = 15; r >= 0; r--) {
-  for (let c = 15; c >= 0; c--) {
-    const i = r * 16 + c;
-    const cell = document.createElement('div');
-    cell.className = 'bit';
-    cell.dataset.index = i;
-    cell.onclick = () => { bits[i] ^= 1; cell.classList.toggle('on', bits[i]); recalc(); };
-    grid.appendChild(cell);
-  }
-}
+/* ---------- grid ---------- */
+const bits = new Uint8Array(256), grid = document.getElementById('grid');
+for(let r=15;r>=0;r--)for(let c=15;c>=0;c--){const i=r*16+c,d=document.createElement('div');
+  d.className='bit';d.dataset.index=i;
+  d.onclick=()=>{bits[i]^=1;d.classList.toggle('on',bits[i]);recalc();};grid.appendChild(d);}
 
-/* === DOM shortcuts === */
-const $ = id => document.getElementById(id);
-const apiSel = $('apiSelect'), binOut = $('bin'), hexOut = $('hex'), wifOut = $('wif');
+/* refs */
+const $          = id=>document.getElementById(id);
+const apiSel     = $('apiSelect'), binOut=$('bin'), hexOut=$('hex'), wifOut=$('wif');
 const addr = {
-  C: { t: $('addrCtext'),  b: $('balC'),  box: $('addrC')  },
-  U: { t: $('addrUtext'),  b: $('balU'),  box: $('addrU')  },
-  S: { t: $('addrStext'),  b: $('balS'),  box: $('addrS')  },
-  B: { t: $('addrB32text'),b: $('balB32'),box: $('addrB32')},
-  T: { t: $('addrTRtext'), b: $('balTR'), box: $('addrTR') }
+  C:{t:$('addrCtext'), b:$('balC'),  box:$('addrC')},
+  U:{t:$('addrUtext'), b:$('balU'),  box:$('addrU')},
+  S:{t:$('addrStext'), b:$('balS'),  box:$('addrS')},
+  B:{t:$('addrB32text'),b:$('balB32'),box:$('addrB32')},
+  T:{t:$('addrTRtext'), b:$('balTR'), box:$('addrTR')}
 };
+/* helpers */
+const concat =( ...arr)=>{const l=arr.reduce((n,a)=>n+a.length,0),o=new Uint8Array(l);let p=0;for(const a of arr){o.set(a,p);p+=a.length;}return o;};
+const chk    = p=>sha256(sha256(p)).slice(0,4);
+const b58c   = p=>bs58.encode(concat(p,chk(p)));
+const to32   = n=>Uint8Array.from(n.toString(16).padStart(64,'0').match(/.{2}/g).map(h=>parseInt(h,16)));
+const tagH   = (tag,msg)=>{const te=new TextEncoder();const th=sha256(te.encode(tag));return sha256(concat(th,th,msg));};
 
-/* ===== helper funcs ===== */
-const concat   = (...arr) => { const len = arr.reduce((n,a)=>n+a.length,0); const out = new Uint8Array(len); let off=0; for(const a of arr){out.set(a,off); off+=a.length;} return out; };
-const chk      = p => sha256(sha256(p)).slice(0,4);
-const b58c     = p => bs58.encode(concat(p,chk(p)));
-const to32     = n => Uint8Array.from(n.toString(16).padStart(64,'0').match(/.{2}/g).map(h=>parseInt(h,16)));
-const taggedHash = (tag,msg)=>{ const e=new TextEncoder(); const th=sha256(e.encode(tag)); return sha256(concat(th,th,msg)); };
-
-/* fetch balance */
-function fetchBal(key){
-  const o = addr[key]; const str = o.t.textContent;
-  if (str === '—') return;
-  o.b.textContent = '0.00000000 BTC'; o.box.classList.remove('funded','error');
-  let sats = 0, err = false;
-  const url = apiSel.value === 'blockchain'
-        ? `https://blockchain.info/q/getreceivedbyaddress/${str}?r=${Math.random()}`
-        : `https://mempool.space/api/address/${str}?r=${Math.random()}`;
-  fetch(url)
-    .then(r=>{ if(!r.ok) throw 0; return apiSel.value==='blockchain' ? r.text() : r.json(); })
-    .then(d=>{ sats = apiSel.value==='blockchain' ? Number(d.trim()) : (d.chain_stats?.funded_txo_sum||0); })
-    .catch(()=> err = true)
-    .finally(()=>{
-      o.b.textContent = (sats/1e8).toFixed(8) + ' BTC';
-      err ? o.box.classList.add('error') : sats>0 && o.box.classList.add('funded');
-    });
+/* balance fetch */
+function fetchBal(k){const o=addr[k],a=o.t.textContent;if(a==='—')return;
+  o.b.textContent='0.00000000 BTC';o.box.classList.remove('funded','error');
+  fetch(apiSel.value==='blockchain'
+        ?`https://blockchain.info/q/getreceivedbyaddress/${a}?r=${Math.random()}`
+        :`https://mempool.space/api/address/${a}?r=${Math.random()}`)
+  .then(r=>{if(!r.ok)throw 0;return apiSel.value==='blockchain'?r.text():r.json();})
+  .then(d=>o.sats=apiSel.value==='blockchain'?Number(d.trim()):(d.chain_stats?.funded_txo_sum||0))
+  .catch(()=>o.error=true)
+  .finally(()=>{o.b.textContent=((o.sats||0)/1e8).toFixed(8)+' BTC';
+                o.error?o.box.classList.add('error'):o.sats>0&&o.box.classList.add('funded');});
 }
 
-/* ===== main recalculation ===== */
+/* click on balance -> mempool */
+Object.values(addr).forEach(o=>{o.b.onclick=()=>{const a=o.t.textContent;if(a!=='—')window.open(`https://mempool.space/address/${a}`,'_blank');};});
+
+/* main recalc */
 function recalc(){
-  const binStr = [...bits].reverse().join('');
-  binOut.textContent = binStr.replace(/(.{64})/g,'$1\n');
-  const hex = BigInt('0b'+binStr).toString(16).padStart(64,'0');
-  hexOut.textContent = hex;
+  const bin=[...bits].reverse().join('');
+  binOut.textContent=bin.replace(/(.{64})/g,'$1\n');
+  const hex=BigInt('0b'+bin).toString(16).padStart(64,'0'); hexOut.textContent=hex;
+  if(/^0+$/.test(bin)){wifOut.textContent='—';Object.values(addr).forEach(o=>{o.t.textContent='—';o.b.textContent='0.00000000 BTC';o.box.classList.remove('funded','error');});return;}
+  const pk=Uint8Array.from(hex.match(/.{2}/g).map(h=>parseInt(h,16)));
 
-  if (/^0+$/.test(binStr)){       // zero key guard
-    wifOut.textContent = '—';
-    Object.values(addr).forEach(o=>{ o.t.textContent='—'; o.b.textContent='0.00000000 BTC'; o.box.classList.remove('funded','error'); });
-    return;
-  }
+  const pubC=getPublicKey(pk,true), pubU=getPublicKey(pk,false);
+  const hC=ripemd160(sha256(pubC)), hU=ripemd160(sha256(pubU));
 
-  const pk = Uint8Array.from(hex.match(/.{2}/g).map(h=>parseInt(h,16)));
+  addr.C.t.textContent=b58c(concat(new Uint8Array([0x00]),hC));
+  addr.U.t.textContent=b58c(concat(new Uint8Array([0x00]),hU));
+  const redeem=concat(new Uint8Array([0x00,0x14]),hC);
+  addr.S.t.textContent=b58c(concat(new Uint8Array([0x05]),ripemd160(sha256(redeem))));
+  addr.B.t.textContent=bech32.encode('bc',[0].concat(bech32.toWords(hC)));
 
-  /* compressed / uncompressed pubkeys */
-  const pubC = getPublicKey(pk,true);
-  const pubU = getPublicKey(pk,false);
-  const hC   = ripemd160(sha256(pubC));
-  const hU   = ripemd160(sha256(pubU));
+  const P=Point.fromHex(pubC),xOnly=to32(P.x);
+  const tweak=BigInt('0x'+Array.from(tagH('TapTweak',xOnly)).map(b=>b.toString(16).padStart(2,'0')).join(''))%CURVE.n;
+  const Q=Point.BASE.multiply(tweak).add(P);
+  addr.T.t.textContent=bech32m.encode('bc',[1].concat(bech32.toWords(to32(Q.x))));
 
-  /* addresses */
-  const addrC = b58c(concat(new Uint8Array([0x00]), hC));
-  const addrU = b58c(concat(new Uint8Array([0x00]), hU));
-  addr.C.t.textContent = addrC;
-  addr.U.t.textContent = addrU;
+  wifOut.textContent=b58c(concat(new Uint8Array([0x80]),pk,new Uint8Array([0x01])));
 
-  /* P2SH-P2WPKH */
-  const redeem  = concat(new Uint8Array([0x00,0x14]), hC);
-  const scripth = ripemd160(sha256(redeem));
-  const addrS   = b58c(concat(new Uint8Array([0x05]), scripth));
-  addr.S.t.textContent = addrS;
-
-  /* P2WPKH (bech32) */
-  const addrB = bech32.encode('bc',[0].concat(bech32.toWords(hC)));
-  addr.B.t.textContent = addrB;
-
-  /* Taproot P2TR */
-  const P      = Point.fromHex(pubC);
-  const xOnly  = to32(P.x);
-  const tweakB = taggedHash('TapTweak', xOnly);
-  const tweakN = BigInt('0x'+Array.from(tweakB).map(b=>b.toString(16).padStart(2,'0')).join('')) % CURVE.n;
-  const Q      = Point.BASE.multiply(tweakN).add(P);
-  const xQ     = to32(Q.x);
-  const addrT  = bech32m.encode('bc',[1].concat(bech32.toWords(xQ)));
-  addr.T.t.textContent = addrT;
-
-  /* WIF */
-  wifOut.textContent = b58c(concat(new Uint8Array([0x80]), pk, new Uint8Array([0x01])));
-
-  /* pull balances */
   ['C','U','S','B','T'].forEach(fetchBal);
 }
 
-/* ===== buttons ===== */
-$('btnRand').onclick = () => {
-  const r = new Uint8Array(32); crypto.getRandomValues(r);
-  for (let i=0;i<256;i++) bits[i] = (r[Math.floor(i/8)]>>(i%8)) & 1;
-  document.querySelectorAll('.bit').forEach(el=>el.classList.toggle('on', bits[el.dataset.index]));
-  recalc();
-};
-$('btnClr').onclick = () => { bits.fill(0); document.querySelectorAll('.bit').forEach(el=>el.classList.remove('on')); recalc(); };
-apiSel.onchange = recalc;
-
-/* initial */
+/* buttons */
+$('btnRand').onclick=()=>{const r=new Uint8Array(32);crypto.getRandomValues(r);for(let i=0;i<256;i++)bits[i]=(r[Math.floor(i/8)]>>(i%8))&1;
+  document.querySelectorAll('.bit').forEach(el=>el.classList.toggle('on',bits[el.dataset.index]));recalc();};
+$('btnClr').onclick = ()=>{bits.fill(0);document.querySelectorAll('.bit').forEach(el=>el.classList.remove('on'));recalc();};
+apiSel.onchange=recalc;
 recalc();
 </script>
 </body>
 </html>
-
