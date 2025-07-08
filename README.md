@@ -14,7 +14,8 @@ A little **toy** that lets you “feel” and “twist” Bitcoin private keys i
 - **Interactive 16×16 grid** representing a 256-bit private key  
 - Click or tap individual bits to flip between 0 / 1  
 - **Clear**, **Random**, **ROL / ROR** (row rotates) & **ROU / ROD** (column rotates) controls  
-- Real-time updates of:
+- **Hotkeys** support (W/A/S/D for column/row rotations)  
+- **Real-time updates** of:
   - Binary (multi-line)
   - HEX (grouped by nibble)
   - WIF (compressed)
@@ -25,8 +26,17 @@ A little **toy** that lets you “feel” and “twist” Bitcoin private keys i
     - **Taproot (bech32m P2TR)**
   - Live balance checks via selectable APIs (mempool.space & blockchain.info)  
 - **Green flash** around the grid for 3 seconds when any balance is non-zero  
+- **Audio feedback** whenever a positive balance is detected (draws your attention)  
 - **Click balance** to open the address on mempool.space in a new tab  
-- **Hotkeys** support (W/A/S/D for column/row rotations)
+- **IndexedDB support**:  
+  - Every discovered key (hex + all derived addresses) is stored locally in your browser under `keyzDB` → `foundKeys`  
+  - **Keys remain only in your browser and are never sent anywhere**  
+  - If you press **Random** repeatedly (even during a hit), each uniquely found key is saved once  
+  - **Inspecting saved keys**:
+    1. Open DevTools (F12 or ⌥⌘I / Ctrl+Shift+I)  
+    2. Go to **Application** (Chrome) or **Storage** (Firefox) tab  
+    3. Expand **IndexedDB > keyzDB > foundKeys** to view entries  
+    4. Each record has `privkey` (HEX), `addresses` (JSON string) and `ts` (timestamp)
 
 ## Tech Stack & Libraries
 
@@ -49,4 +59,4 @@ A little **toy** that lets you “feel” and “twist” Bitcoin private keys i
 ---
 
 © 2025 Decker  
-Built “by hand” with a bit of AI magic. Enjoy responsibly!  
+Built “by hand” with a bit of AI magic. Enjoy responsibly!
