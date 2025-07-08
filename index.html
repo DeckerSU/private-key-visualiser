@@ -128,8 +128,40 @@ for(let r=15;r>=0;r--)for(let c=15;c>=0;c--){const i=r*16+c,d=document.createEle
 const refreshGrid=()=>document.querySelectorAll('.bit')
   .forEach(el=>el.classList.toggle('on',bits[el.dataset.index]));
 
+  /* ========  IndexedDB bootstrap  ======== */
+const dbPromise = new Promise((resolve, reject) => {
+  const req = indexedDB.open('keyzDB', 1);
+  req.onupgradeneeded = e => {
+    // One object-store: key = privkey (HEX), value = JSON with addresses & timestamp
+    e.target.result.createObjectStore('foundKeys', { keyPath: 'privkey' });
+  };
+  req.onsuccess = e => resolve(e.target.result);
+  req.onerror   = e => reject(e.target.error);
+});
+
+/* Persist key + addresses */
+function store_keys(privHex, addrsObj) {
+  dbPromise
+    .then(db => {
+      const tx = db.transaction('foundKeys', 'readwrite');
+      tx.objectStore('foundKeys').put({
+        privkey:   privHex,
+        addresses: JSON.stringify(addrsObj),
+        ts:        Date.now()
+      });
+      tx.oncomplete = () => console.log('Key stored to IndexedDB');
+      tx.onerror    = ev  => console.error('IndexedDB tx error:', ev.target.error);
+    })
+    .catch(err => console.error('IndexedDB open error:', err));
+}
+
 /* highlight */
 let hlTimeout=null;
+
+let currentHexKey  = '';          // updated in recalc()
+let currentAddrs   = {};          // updated in recalc()
+let savedThisKey   = false;       // reset in recalc()
+
 const flash=()=>{grid.classList.add('highlight');
   clearTimeout(hlTimeout);hlTimeout=setTimeout(()=>grid.classList.remove('highlight'),3000);};
 
@@ -159,9 +191,19 @@ function fetchBal(k){
   .then(r=>{if(!r.ok)throw 0;return apiSel.value==='blockchain'?r.text():r.json();})
   .then(d=>o.sats=apiSel.value==='blockchain'?Number(d.trim()):(d.chain_stats?.funded_txo_sum||0))
   .catch(()=>o.error=true)
-  .finally(()=>{o.b.textContent=((o.sats||0)/1e8).toFixed(8)+' BTC';
-                if(o.error)o.box.classList.add('error');
-                else if(o.sats>0){o.box.classList.add('funded');flash();}});
+  .finally(()=>{
+                  o.b.textContent = ((o.sats || 0) / 1e8).toFixed(8) + ' BTC';
+                  if (o.error) {
+                    o.box.classList.add('error');
+                  } else if (o.sats > 0) {
+                    o.box.classList.add('funded');
+                    if (!savedThisKey) { // store only once per key
+                      store_keys(currentHexKey, currentAddrs);
+                      savedThisKey = true;
+                    }
+                    flash();
+                  }
+              });
 }
 /* click balance→mempool */
 Object.values(addr).forEach(o=>{o.b.onclick=()=>{const a=o.t.textContent;if(a!=='—')window.open(`https://mempool.space/address/${a}`,'_blank');};});
@@ -202,6 +244,17 @@ function recalc(){
 
   wifOut.textContent=b58c(concat(new Uint8Array([0x80]),pk,new Uint8Array([0x01])));
   ['C','U','S','B','T'].forEach(fetchBal);
+
+  /* db */
+  currentHexKey = hex;
+  currentAddrs  = {                    // keep a snapshot for save
+    C: addr.C.t.textContent,
+    U: addr.U.t.textContent,
+    S: addr.S.t.textContent,
+    B: addr.B.t.textContent,
+    T: addr.T.t.textContent
+  };
+  savedThisKey = false;                // allow saving once per key
 }
 
 /* buttons */
