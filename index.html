@@ -155,15 +155,18 @@ function store_keys(privHex, addrsObj) {
     .catch(err => console.error('IndexedDB open error:', err));
 }
 
-/* highlight */
-let hlTimeout=null;
+/* highlight + sound */
+const fx = document.getElementById('fxFound');   // audio element
+let hlTimeout = null;
 
 let currentHexKey  = '';          // updated in recalc()
 let currentAddrs   = {};          // updated in recalc()
 let savedThisKey   = false;       // reset in recalc()
 
 const flash=()=>{grid.classList.add('highlight');
-  clearTimeout(hlTimeout);hlTimeout=setTimeout(()=>grid.classList.remove('highlight'),3000);};
+  // play SFX
+  try { fx.currentTime = 0; fx.play(); } catch (e) { /* autoplay block? ignore */ }
+  clearTimeout(hlTimeout);hlTimeout=setTimeout(()=>grid.classList.remove('highlight'),1300);};
 
 /* DOM refs */
 const $=id=>document.getElementById(id),apiSel=$('apiSelect');
@@ -277,5 +280,6 @@ recalc();
 <a id="dexBtn" href="https://app.komodoplatform.com/" target="_blank" rel="noopener">
   <img src="dex-icon-192x192.png" alt="DEX">
 </a>
+<audio id="fxFound" src="privkey-found-fx.opus" preload="auto"></audio>
 </body>
 </html>
