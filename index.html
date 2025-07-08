@@ -240,10 +240,24 @@ function recalc(){
   addr.S.t.textContent=b58c(concat(new Uint8Array([0x05]),ripemd160(sha256(redeem))));
   addr.B.t.textContent=bech32.encode('bc',[0].concat(bech32.toWords(hC)));
 
-  const P=Point.fromHex(pubC),xOnly=to32(P.x),
-        tweak=BigInt('0x'+Array.from(tagH('TapTweak',xOnly)).map(b=>b.toString(16).padStart(2,'0')).join(''))%CURVE.n,
-        Q=Point.BASE.multiply(tweak).add(P);
-  addr.T.t.textContent=bech32m.encode('bc',[1].concat(bech32.toWords(to32(Q.x))));
+  /* ---------- Taproot (fixed even-Y handling) ---------- */
+  // Start with even-Y internal key as required by BIP-340
+  let P = Point.fromHex(pubC);
+  if (P.y & 1n) P = P.negate();                  // make Y even
+  const xOnly  = to32(P.x);
+
+  // Tagged hash "TapTweak" of xOnly (no merkle root)
+  const tweakB = tagH('TapTweak', xOnly);
+  const tweakN = BigInt('0x' +
+    Array.from(tweakB).map(b => b.toString(16).padStart(2,'0')).join('')) % CURVE.n;
+
+  // Add tweak * G
+  let Q = P.add(Point.BASE.multiply(tweakN));
+  if (Q.y & 1n) Q = Q.negate();                  // ensure even Y for output key
+
+  addr.T.t.textContent = bech32m.encode(
+    'bc', [1].concat(bech32.toWords(to32(Q.x)))
+  );
 
   wifOut.textContent=b58c(concat(new Uint8Array([0x80]),pk,new Uint8Array([0x01])));
   ['C','U','S','B','T'].forEach(fetchBal);
